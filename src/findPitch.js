@@ -3,22 +3,27 @@ import fanyinStringTable from "./data/fanyinTable";
 
 function findPitch (combination, isFanyin){    
     let hui = combination.hui;
+    let string = combination.string;
 
     if(hui == undefined){
         hui = "san3"
     }
+    if(string == undefined){
+        string == "1"
+    }
 
     if(!isFanyin){
-        return getPressedPitch(hui, combination.string);
+        return getPressedPitch(hui, string);
     } else {
-        return getFanyinPitch(hui, combination.string);
+        return getFanyinPitch(hui, string);
     }
 }
 
 function getFanyinPitch(hui, stringNum){
-    isHuiCorrect = false;
+    let isHuiCorrect = false;
+
     round(hui, 1);
-        if(hui == "Wai4"){
+    if(hui == "Wai4"){
         hui = 13.1;
     }
 
@@ -26,7 +31,7 @@ function getFanyinPitch(hui, stringNum){
     let index = 0;
     while (!isHuiCorrect){
         index = 0;
-        for (huiNum of fanyinStringTable.huiNums){
+        for (let huiNum of fanyinStringTable.huiNums){
             if(hui === huiNum){
                 isHuiCorrect = true;
                 break;
@@ -37,7 +42,7 @@ function getFanyinPitch(hui, stringNum){
         hui += i * 0.1;
         hui = round(hui, 1);
         
-        if (hui > 13.6 && hui < 1){
+        if (hui > 13.6 || hui < 1){
             console.log("invalid hui number: " + originalHui);
             break;
         }
@@ -69,28 +74,14 @@ function getPressedPitch(hui, stringNum) {
         hui = 13.1;
         originalHui = 13.1;
     }
-    
 
     huiIndex = getHuiIndex(huiNums, hui);
     
-
-    //ZAOKRUHLI HUI
     let i = 1;
-    let max = 0;
-    let min = 14;
     while (huiIndex == undefined){
 
         hui += i * 0.1;
         hui = round(hui, 1);
-
-         
-        if (hui > max){
-            max = hui;
-        }
-
-        if (hui < min){
-            min = hui;
-        }
 
         huiIndex = getHuiIndex(huiNums, hui);
 
@@ -100,14 +91,14 @@ function getPressedPitch(hui, stringNum) {
             i = (Math.abs(i) + 1);
         }
         
-        if (max > 13.6 && min < 1){
+        if (hui > 13.6 || hui < 1){
             console.log("invalid hui number: " + originalHui);
             break;
         }
     }
 
 
-    //ZISTI PITCH a OKTAVU
+    //find pitch and octave
     switch (stringNum){
         case 1:
             octave = findOctave(7.0, 4.0, 1.0, originalHui);
@@ -143,8 +134,7 @@ function getPressedPitch(hui, stringNum) {
 
     if(huiIndex == 0){
         pitch = pitches [11] + "/" + octave ;
-    }else {
-        
+    } else {
         pitch = pitches [huiIndex-1] + "/" + octave ;
     }
 
@@ -165,7 +155,6 @@ function getHuiIndex(huiNums, hui){
 
 function findOctave(num1, num2, num3, hui){
     if( (hui>num1)|| (hui == "san3")){
-    // if( (hui>num1)|| (hui == "open")){
         return 2;
     } else if (hui>num2){
         return 3;

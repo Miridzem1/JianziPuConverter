@@ -1,5 +1,4 @@
 import convert from "./convert";
-// import Vex from "vexflow";
 import { Renderer, Stave, StaveNote, Voice, Formatter, Accidental, Dot, Beam, Stem } from "vexflow";
 
 let positions = [];
@@ -58,10 +57,10 @@ function draw(songConverted, songInfo, div){
     let notes = [];
     let xPositions = [];
     let yPositions = [];
+    let beamVal;
     let beamFlag = false;
     let key, duration, beatsLeft, note;
     let clef = songInfo.clef;
-
 
     while (notesLeft>0){
         notes = [];
@@ -79,9 +78,23 @@ function draw(songConverted, songInfo, div){
             else if (!songConverted[index].hasOwnProperty("pitch")){
                 key = [songConverted[index][0].pitch, songConverted[index][1].pitch];
                 duration = songConverted[index][0].duration;
+
+                if(songConverted[index][0].hasOwnProperty('beam')){
+                    beamVal = songConverted[index][0].beam;
+                }
+                else {
+                    beamVal = "";
+                }
             } else {
                 key = [songConverted[index].pitch];
                 duration = songConverted[index].duration;
+
+                if(songConverted[index].hasOwnProperty('beam')){
+                    beamVal = songConverted[index].beam;
+                }
+                else {
+                    beamVal = "";
+                }
             }
                 
             note = new StaveNote({clef:clef, keys: key, duration: [duration], auto_stem: true});
@@ -95,51 +108,25 @@ function draw(songConverted, songInfo, div){
                 });
             }         
 
-                beatsLeft -= (1/duration);
+            beatsLeft -= (1/duration);
 
-            if(!songConverted[index].hasOwnProperty("pitch")){
-                if (songConverted[index][0].beam === "start"){
-                    beamFlag = true;
-                }
-                else if (songConverted[index][0].beam === "end"){
-                    beamFlag = false;
-                    beam.push(note);
+            if (beamVal === "start"){
+                beamFlag = true;
+            } else if (beamVal === "end"){
+                beamFlag = false;
+                beam.push(note);
 
-                    let stem_direction = calculateStemDirection(beam);
-                    for (i = 0; i < beam.length; ++i) {
-                        note = beam[i];
+                let stem_direction = calculateStemDirection(beam);
+                for (let i = 0; i < beam.length; ++i) {
+                    note = beam[i];
                             
-                        note.setStemDirection(stem_direction);
-                        this.stem_direction = stem_direction;
+                    note.setStemDirection(stem_direction);
                         
-                        note.setBeam(this);
-                    }
-                    beams.push(new Beam(beam));
-                        
-                    beam = [];
+                    note.setBeam(this);
                 }
-            }
-            else if (songConverted[index].hasOwnProperty("beam")){
-                if (songConverted[index].beam === "start"){
-                    beamFlag = true;
-                }
-                else if (songConverted[index].beam === "end"){
-                    beamFlag = false;
-                    beam.push(note);
-
-                    let stem_direction = calculateStemDirection(beam);
-                    for (let i = 0; i < beam.length; ++i) {
-                        note = beam[i];
-                            
-                        note.setStemDirection(stem_direction);
-                        // this.stem_direction = stem_direction;
-                            
-                        note.setBeam(this);
-                    }
-                    beams.push(new Beam(beam));
-                        
-                    beam = [];
-                }
+                beams.push(new Beam(beam));
+                    
+                beam = [];
             }
 
             if (beamFlag){
@@ -164,12 +151,10 @@ function draw(songConverted, songInfo, div){
         // Render voice
         voice.draw(context, stave);
 
-        //sving x-coordinate of each note
+        //saving x-coordinate of each note
         notes.forEach(note => {
             xPositions.push(note.getAbsoluteX());
             yPositions.push(y);
-            // console.log(note.getAbsoluteX());
-            // console.log(y);
         });
 
         // Draw the beams and stems.
@@ -184,7 +169,6 @@ function draw(songConverted, songInfo, div){
             x=10;
             y+=200;
         }
-
 
         stave = new Stave(x, y, width);
         if(songConverted[index] && songConverted[index].hasOwnProperty('num_beats')){
@@ -206,27 +190,24 @@ function draw(songConverted, songInfo, div){
 
     index = 0
     songConverted.forEach(note => {
-        if (note.isSymbol==false){
-            xPositions.splice(index, 1);
-            yPositions.splice(index, 1);
+        if(note.hasOwnProperty('pitch') || note.length > 1){
+            if (note.isSymbol==false){
+                xPositions.splice(index, 1);
+                yPositions.splice(index, 1);
+            } else {
+                index++;
+            }
         }
-        index++;
     });
 
+    positions =[];
     positions.push(xPositions);
     positions.push(yPositions);
 
-    // positions = {
-    //     "xPositions": xPositions,
-    //     "yPositions": yPositions
-    // }
-    
 }   
 
-    //function from http://www.vexflow.com/build/docs/beam.html
+//function from http://www.vexflow.com/build/docs/beam.html
 function calculateStemDirection(notes) {
-    // const { Stem } = Vex.Flow;
-
     let lineSum = 0;
     notes.forEach(note => {
         if (note.keyProps) {
